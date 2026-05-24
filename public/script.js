@@ -22,9 +22,9 @@ form.addEventListener("submit", async (e) => {
         body: formData
     });
 
-    if (res.status === 401) {
-        alert("ログインしてください");
-        window.location.href = "/login_register.html";
+    if (!res.ok) {
+        alert("ログインが必要です");
+        location.href = "/login_register.html";
         return;
     }
 
@@ -40,7 +40,7 @@ form.addEventListener("submit", async (e) => {
 
 async function loadAuth() {
 
-    const res = await fetch("/me",{
+    const res = await fetch("/api/me",{
         credentials: "include"
     });
     const data = await res.json();

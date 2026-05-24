@@ -5,7 +5,9 @@ async function searchUser() {
         document.getElementById("searchUsername").value;
 
     const res =
-        await fetch(`/api/user/search?username=${username}`);
+        await fetch(`/api/user/search?username=${username}`,{
+            credentials: "include"
+        });
 
     const user = await res.json();
 
@@ -58,7 +60,9 @@ async function addFriend(friendId) {
 async function loadRequests() {
 
     const res =
-        await fetch("/api/friend/request");
+        await fetch("/api/friend/request", {
+            credentials: "include"
+        });
 
     const requests = await res.json();
 
@@ -119,7 +123,9 @@ async function acceptRequest(requestId, senderId) {
 async function loadFriends() {
 
     const res =
-        await fetch("/api/friends");
+        await fetch("/api/friends", {
+        credentials: "include"
+        });
 
     const friends = await res.json();
 

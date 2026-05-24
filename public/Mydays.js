@@ -17,7 +17,7 @@ async function deleteDairy(id){
 }
 async function loadDiary() {
 
-    const response = await fetch("/api/diary",{
+    const response  =  await fetch("/api/friends-diary", {
         credentials: "include"
     });
 
@@ -82,13 +82,16 @@ darkmode.addEventListener("click", ()=>{
 const darkMode = localStorage.getItem("darkmode");
 
 if(darkMode === "true"){
-    document.body.classList.add("dark");
-    localStorage.setItem("darkmode", "true/false")
+    localStorage.setItem("darkmode",
+    document.body.classList.contains("dark")
+);
 }
 
 async function loadAuth() {
 
-    const res = await fetch("/me");
+    const res = await fetch("/api/me",{
+        credentials: "include"
+    });
     const data = await res.json();
 
     // 上部表示

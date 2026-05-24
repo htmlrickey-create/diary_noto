@@ -25,15 +25,13 @@ const upload = multer({
 // =======================
 // DB（Render対応）
 // =======================
-const db = mysql.createConnection({
+const sessionStore = new MySQLStore({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    createDatabaseTable: true
 });
 
 db.connect(err => {
@@ -64,8 +62,8 @@ app.use(session({
     store: sessionStore,
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production"
+        sameSite: "none",
+        secure: true
     }
 }));
 
@@ -150,6 +148,83 @@ app.get("/api/me", (req, res) => {
     });
 });
 
+
+app.get("/api/mypage", isLogin, (req, res) => {
+
+    const userId = req.session.userId;
+
+    // ユーザー情報
+    db.query(
+        "SELECT id, username, email FROM users WHERE id = ?",
+        [userId],
+        (err, userRows) => {
+
+            if (err) return res.status(500).json({ error: "user error" });
+
+            const user = userRows[0];
+
+            // 投稿数
+            db.query(
+                "SELECT COUNT(*) AS postCount FROM diaries WHERE user_id = ?",
+                [userId],
+                (err, postRows) => {
+
+                    if (err) return res.status(500).json({ error: "post error" });
+
+                    // フレンド数
+                    db.query(
+                        `
+                        SELECT COUNT(*) AS friendCount
+                        FROM friendships
+                        WHERE user_id = ?
+                        `,
+                        [userId],
+                        (err, friendRows) => {
+
+                            if (err) return res.status(500).json({ error: "friend error" });
+
+                            // 投稿一覧
+                            db.query(
+                                "SELECT * FROM diaries WHERE user_id = ? ORDER BY id DESC",
+                                [userId],
+                                (err, diaryRows) => {
+
+                                    if (err) return res.status(500).json({ error: "diary error" });
+
+                                    res.json({
+                                        user,
+                                        postCount: postRows[0].postCount,
+                                        friendCount: friendRows[0].friendCount,
+                                        diaries: diaryRows
+                                    });
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
+app.post("/api/profile", isLogin, (req, res) => {
+
+    const { username, email } = req.body;
+
+    db.query(
+        "UPDATE users SET username = ?, email = ? WHERE id = ?",
+        [username, email, req.session.userId],
+        (err) => {
+
+            if (err) return res.status(500).json({ message: "更新失敗" });
+
+            // セッション更新
+            req.session.username = username;
+
+            res.json({ message: "更新成功" });
+        }
+    );
+});
 // =======================
 // ログアウト
 // =======================
@@ -319,6 +394,21 @@ app.post("/api/friend/accept", isLogin, (req, res) => {
     });
 });
 
+//日記の削除API
+app.delete("/api/diary/:id", isLogin, (req, res) => {
+
+    const id = req.params.id;
+
+    db.query(
+        "DELETE FROM diaries WHERE id = ? AND user_id = ?",
+        [id, req.session.userId],
+        (err) => {
+            if (err) return res.status(500).json({ error: "削除失敗" });
+
+            res.json({ message: "削除成功" });
+        }
+    );
+});
 // =======================
 // いいね
 // =======================
