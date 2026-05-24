@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<title>フレンド</title>
+
+<link rel="stylesheet" href="friend.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>フレンド</h1>
+
+    <!-- 友達検索 -->
+    <div class="card">
+
+        <h2>友達検索</h2>
+
+        <div class="search-box">
+            <input
+                type="text"
+                id="searchUsername"
+                placeholder="ユーザーネームを入力"
+            >
+
+            <button onclick="searchUser()">
+                検索
+            </button>
+        </div>
+
+        <div id="result"></div>
+
+    </div>
+
+    <!-- 申請一覧 -->
+    <div class="card">
+
+        <h2>フレンド申請</h2>
+
+        <div id="requestList"></div>
+
+    </div>
+
+    <!-- フレンド一覧 -->
+    <div class="card">
+
+        <h2>フレンド一覧</h2>
+
+        <div id="friendList"></div>
+
+    </div>
+
+</div>
+
+<nav class="bottom-nav">
+
+    <!-- ホーム -->
+    <a href="./index.html" class="nav-item">
+        <i class="bi bi-house-fill"></i>
+        <span>ホーム</span>
+    </a>
+
+    <!--友達追加-->
+    <a href="./friends.html" class="nav-item active">
+        <i class="bi bi-person-fill-add"></i>
+        <span>フレンド追加</span>
+    </a>
+
+    <!-- 友達 -->
+    <a href="./friend_days.html" class="nav-item">
+        <i class="bi bi-people-fill"></i>
+        <span>友達</span>
+    </a>
+
+    <!-- 自分の日記 -->
+    <a href="./Mydays.html" class="nav-item">
+        <i class="bi bi-journal-text"></i>
+        <span>日記</span>
+    </a>
+
+    <!-- マイページ -->
+    <a href="./mypage.html" class="nav-item">
+        <i class="bi bi-person-circle"></i>
+        <span>マイ</span>
+    </a>
+
+</nav>
+
+<script src="./friend.js"></script>
+
+</body>
+</html>

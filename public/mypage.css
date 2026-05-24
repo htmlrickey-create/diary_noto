@@ -1,0 +1,305 @@
+@charset "utf-8";
+
+/* 背景 */
+body {
+    margin: 0;
+    font-family: "Zen Maru Gothic", sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+
+/* 全体中央寄せ */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 25px;
+    padding: 40px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* プロフィールカード */
+.profile-card {
+    width: 300px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* アバター */
+.avatar {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #3b82f6, #06b6d4);
+    margin: auto;
+    margin-bottom: 10px;
+}
+
+/* 名前 */
+.profile-card h1 {
+    margin: 10px 0 5px;
+}
+
+/* メール */
+.profile-card p {
+    opacity: 0.8;
+}
+
+/* stats */
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.stats div h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+/* ボタン共通 */
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+/* 編集ボタン */
+.edit-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #2563eb;
+}
+
+/* ログアウト */
+.logout-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.logout-btn:hover {
+    background: #dc2626;
+}
+
+/* 投稿エリア */
+.diary-section {
+    flex: 1;
+}
+
+.diary-section h2 {
+    margin-bottom: 10px;
+}
+
+/* 投稿カード */
+.diary-card {
+    background: rgba(255,255,255,0.06);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.diary-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255,255,255,0.12);
+}
+
+/* ホームリンク */
+.home-link {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+}
+
+.home-link a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+}
+
+/* モーダル背景 */
+.edit-box {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+
+    background: rgba(15, 23, 42, 0.95);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* 入力 */
+.edit-box input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+/* 保存ボタン */
+.edit-box button {
+    background: #3b82f6;
+    color: white;
+}
+
+.edit-box button:hover {
+    background: #2563eb;
+}
+
+/* 最初は非表示 */
+.edit-box{
+    display: none;
+}
+
+/* 表示用 */
+.edit-box.show{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+.bottom-nav{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    height: 70px;
+
+    background: rgba(255,255,255,0.95);
+
+    backdrop-filter: blur(10px);
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    border-top: 1px solid #ddd;
+
+    z-index: 999;
+}
+.nav-item{
+    flex: 1;
+
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-decoration: none;
+
+    color: #666;
+
+    font-size: 11px;
+
+    transition: 0.2s;
+}
+
+.nav-item i{
+    font-size: 22px;
+    margin-bottom: 4px;
+}
+
+.nav-item:hover{
+    color: #667eea;
+}
+
+.nav-item.active{
+    color: #667eea;
+}
+
+@media screen and (max-width: 768px) {
+
+    /* 全体余白 */
+    .container {
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 10px;
+        gap: 15px;
+    }
+
+    /* プロフィールカード */
+    .profile-card {
+        width: 100%;
+        max-width: 350px;
+        padding: 15px;
+    }
+
+    /* stats（横並び→崩れ防止） */
+    .stats {
+        gap: 10px;
+    }
+
+    .stats div h3 {
+        font-size: 18px;
+    }
+
+    /* ボタン */
+    button {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    /* 投稿エリア */
+    .diary-section {
+        width: 100%;
+    }
+
+    .diary-card {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    /* ホームリンク */
+    .home-link {
+        top: 10px;
+        left: 10px;
+    }
+
+    .home-link a {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    /* モーダル */
+    .edit-box {
+        width: 90%;
+        max-width: 320px;
+    }
+
+    /* 下ナビ */
+    .bottom-nav {
+        height: 60px;
+    }
+
+    .nav-item {
+        font-size: 10px;
+    }
+
+    .nav-item i {
+        font-size: 18px;
+    }
+}

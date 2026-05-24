@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>毎日日記app</title>
+</head>
+<body>
+<div class="headtext">
+    <h2>毎日日記<i class="bi bi-journals"></i></h2>
+    <h3>小さな記録を、毎日の習慣に。</h3>
+</div>
+
+    <div class="container">
+        <div class="explanation">
+            <p>毎日日記の説明と利用規約について</p>
+            <p>毎日日記の説明</p>
+            <h2>
+            毎日日記とは、自分だけの日記を作成して思い出を記録したり、<br>
+            友達と日記を共有して、お互いの一日を見たり会話したりできるアプリです！
+            </h2>
+            <p>毎日日記の利用規約とその他</p>
+            <a href="#">毎日日記の使用規約<i class="bi bi-file-earmark-text"></i></a>
+            <a href="#">プライバシーポリシーに関する記述<i class="bi bi-shield-check"></i></a>
+            <div id="auth"></div>
+        </div>
+    </div>
+
+    <div class="inputText">
+        <div class="form-glorp">
+            <h4>日記制作フォーム</h4>
+            <form id="diaryForm">
+                <input type="text" id="titleInput" name="title" placeholder="題名">
+
+                <textarea id="contentInput" name="content" placeholder="今日あったこと"></textarea>
+
+                <input type="file" id="imageInput" name="image">
+
+                <input type="date" id="daysInput" name="date"
+                min="2025-06-01" max="2030-12-31">
+
+               <button type="submit">日記を作成する</button>
+            </form>
+        </div>
+    </div>
+
+<nav class="bottom-nav">
+
+    <!-- ホーム -->
+    <a href="./index.html" class="nav-item active">
+        <i class="bi bi-house-fill"></i>
+        <span>ホーム</span>
+    </a>
+
+    <!--友達追加-->
+    <a href="./friends.html" class="nav-item">
+        <i class="bi bi-person-fill-add"></i>
+        <span>フレンド追加</span>
+    </a>
+
+    <!-- 友達 -->
+    <a href="./friend_days.html" class="nav-item">
+        <i class="bi bi-people-fill"></i>
+        <span>友達</span>
+    </a>
+
+    <!-- 自分の日記 -->
+    <a href="./Mydays.html" class="nav-item">
+        <i class="bi bi-journal-text"></i>
+        <span>日記</span>
+    </a>
+
+    <!-- マイページ -->
+    <a href="./mypage.html" class="nav-item">
+        <i class="bi bi-person-circle"></i>
+        <span>マイ</span>
+    </a>
+
+</nav>
+
+    <script src="./script.js"></script>
+</body>
+</html>
