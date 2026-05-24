@@ -1,25 +1,32 @@
 const diaryContainer = document.getElementById("diaryContainer");
 
-
 async function deleteDairy(id){
 
     const result = confirm("日記を削除しますか？");
 
     if(!result){
-        alert ("削除をキャンセルしました")
-        return
+        alert("削除をキャンセルしました");
+        return;
     }
 
     await fetch(`/api/diary/${id}`,{
-        method: "DELETE"
-    });
-    location.reload();
-}
-async function loadDiary() {
-
-    const response  =  await fetch("/api/friends-diary", {
+        method: "DELETE",
         credentials: "include"
     });
+
+    location.reload();
+}
+
+async function loadDiary() {
+
+    const response = await fetch("/api/friends-diary", {
+        credentials: "include"
+    });
+
+    if (!response.ok) {
+        console.error("ログインしていない or エラー");
+        return;
+    }
 
     const diaries = await response.json();
 
@@ -31,32 +38,28 @@ async function loadDiary() {
     }
 
     if (diaries.length === 0){
-
         diaryContainer.innerHTML = `
         <div class="empty-container">
-            <h1 class="empty-Message">日記がないため表示することができません</h1> 
+            <h1 class="empty-Message">日記がありません</h1> 
             <a class="atag-Message" href="./index.html">日記を作成する</a>
         </div>
         `;
-
-        return
+        return;
     }
-
 
     diaries.forEach((diary) => {
 
         const div = document.createElement("div");
-
         div.classList.add("diary-card");
 
         div.innerHTML = `
-        <button onclick="deleteDairy(${diary.id})">
-            削除
-        </button>
-        <h2>${diary.title}</h2>
-        <p>${diary.content}</p>
-        <small>${diary.date}</small>
-        ${diary.image ? <img class="diary-image" src="/uploads/${diary.image}"></img>: ""}
+            <button onclick="deleteDairy(${diary.id})">
+                削除
+            </button>
+            <h2>${diary.title}</h2>
+            <p>${diary.content}</p>
+            <small>${diary.date}</small>
+            ${diary.image ? `<img class="diary-image" src="/uploads/${diary.image}">` : ""}
         `;
 
         diaryContainer.prepend(div);
@@ -65,6 +68,9 @@ async function loadDiary() {
 
 loadDiary();
 
+// =======================
+// dark mode
+// =======================
 const darkmode = document.getElementById("darkmodeBtn");
 
 darkmode.addEventListener("click", ()=>{
@@ -75,29 +81,27 @@ darkmode.addEventListener("click", ()=>{
 
     localStorage.setItem("darkmode", isDark);
 
-    if(isDark){
-        darkmode.textContent = "ホワイトモード";
-    }else{
-        darkmode.textContent = "ダークモード";
-    }
-
+    darkmode.textContent = isDark ? "ホワイトモード" : "ダークモード";
 });
 
 const darkMode = localStorage.getItem("darkmode");
 
-if(darkMode === "true"){
+if (darkMode === "true") {
     document.body.classList.add("dark");
     darkmode.textContent = "ホワイトモード";
 }
 
+// =======================
+// auth
+// =======================
 async function loadAuth() {
 
     const res = await fetch("/api/me",{
         credentials: "include"
     });
+
     const data = await res.json();
 
-    // 上部表示
     const auth = document.getElementById("auth");
 
     if (auth) {
