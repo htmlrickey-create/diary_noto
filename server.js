@@ -16,12 +16,19 @@ app.use(express.static("public"));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // =======================
-// multer
+// multer（画像拡張子付き保存版）
 // =======================
-const upload = multer({
-    dest: path.join(__dirname, "uploads/")
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/");
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, Date.now() + ext);
+    }
 });
 
+const upload = multer({ storage });
 // =======================
 // DB
 // =======================

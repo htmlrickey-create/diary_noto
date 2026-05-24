@@ -331,7 +331,7 @@ h1{
 
     /* フォーム */
     .form-glorp {
-        width: 85%;
+        width: 90%;
         padding: 20px;
         border-radius: 20px;
     }
@@ -342,7 +342,7 @@ h1{
 
     .form-glorp input,
     .form-glorp textarea {
-        width: 80%;
+        width: 90%;
         font-size: 18px;
     }
 
@@ -351,8 +351,8 @@ h1{
     }
 
     .form-glorp button {
-        width: 90%;
-        height: 50px;
+        width: 85%;
+        height: 30px;
         font-size: 18px;
     }
 
