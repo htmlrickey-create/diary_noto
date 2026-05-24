@@ -9,73 +9,92 @@
 <title>Login UI</title>
 
 <style>
+/* =========================
+   reset
+========================= */
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family: "Segoe UI", sans-serif;
+  font-family:"Segoe UI",sans-serif;
 }
 
 body{
-  height:100vh;
+  min-height:100vh;
+  background:linear-gradient(135deg,#667eea,#764ba2);
   display:flex;
   justify-content:center;
   align-items:center;
-  background: linear-gradient(135deg,#667eea,#764ba2);
-  overflow:hidden;
+  padding:20px;
 }
 
-/* ===== 外枠 ===== */
+/* =========================
+   container
+========================= */
 .container{
-  width:850px;
-  max-width:95%;
-  height:520px;
-  position:relative;
-  border-radius:20px;
-  overflow:hidden;
-  display:flex;
+  width:900px;
+  max-width:100%;
+  min-height:550px;
   background:#fff;
-  box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  box-shadow:0 10px 40px rgba(0,0,0,0.15);
 }
 
-/* ===== フォーム共通 ===== */
+/* =========================
+   form
+========================= */
 .form-box{
   width:50%;
-  padding:40px;
+  padding:60px 50px;
   display:flex;
   flex-direction:column;
   justify-content:center;
-  transition:0.7s cubic-bezier(.2,.8,.2,1);
+  transition:0.5s ease;
+  background:#fff;
 }
 
-h2{
-  margin-bottom:15px;
-  color:#333;
+.form-box h2{
+  font-size:32px;
+  color:#222;
+  margin-bottom:10px;
+}
+
+.form-box p{
+  color:#777;
+  margin-bottom:25px;
+  font-size:14px;
 }
 
 input{
-  padding:12px;
-  margin:8px 0;
-  border:1px solid #ddd;
-  border-radius:8px;
-  outline:none;
-  transition:0.2s;
+  width:100%;
+  padding:14px 16px;
+  margin:10px 0;
+  border:none;
+  border-radius:12px;
+  background:#f4f6fb;
+  font-size:15px;
+  transition:0.25s;
 }
 
 input:focus{
-  border-color:#667eea;
-  transform:scale(1.02);
+  outline:none;
+  background:#fff;
+  box-shadow:0 0 0 2px #667eea55;
 }
 
 button{
-  margin-top:15px;
-  padding:12px;
+  margin-top:18px;
+  padding:14px;
   border:none;
-  border-radius:8px;
+  border-radius:12px;
   background:#667eea;
   color:#fff;
+  font-size:15px;
   cursor:pointer;
-  transition:0.3s;
+  transition:0.25s;
 }
 
 button:hover{
@@ -83,11 +102,13 @@ button:hover{
   transform:translateY(-2px);
 }
 
-/* ===== オーバーレイ ===== */
+/* =========================
+   overlay
+========================= */
 .overlay{
   position:absolute;
   top:0;
-  left:50%;
+  right:0;
   width:50%;
   height:100%;
   background:linear-gradient(135deg,#667eea,#764ba2);
@@ -97,71 +118,122 @@ button:hover{
   justify-content:center;
   align-items:center;
   text-align:center;
-  padding:20px;
-  transition:0.7s cubic-bezier(.2,.8,.2,1);
+  padding:40px;
+  transition:0.5s ease;
 }
 
-/* ===== 初期状態 ===== */
-.login-box{
-  z-index:2;
+.overlay h2{
+  font-size:34px;
+  margin-bottom:15px;
 }
 
+.overlay p{
+  font-size:15px;
+  line-height:1.7;
+}
+
+.overlay button{
+  background:#fff;
+  color:#667eea;
+}
+
+.overlay button:hover{
+  background:#f2f2f2;
+}
+
+/* =========================
+   animation
+========================= */
 .register-box{
   opacity:0;
-  transform:scale(0.9);
   pointer-events:none;
+  transform:translateX(40px);
 }
 
-/* ===== 切替アニメーション ===== */
 .container.active .overlay{
-  left:0;
+  transform:translateX(-100%);
 }
 
 .container.active .login-box{
-  transform:translateX(100%) scale(0.9);
   opacity:0;
   pointer-events:none;
-  filter:blur(10px);
+  transform:translateX(-40px);
 }
 
 .container.active .register-box{
   opacity:1;
-  transform:translateX(0) scale(1);
   pointer-events:auto;
+  transform:translateX(0);
 }
 
-/* ===== スマホ対応（ここ重要） ===== */
-@media (max-width:768px){
+/* =========================
+   mobile
+========================= */
+@media screen and (max-width:768px){
 
-  .container{
-    flex-direction:column;
-    height:auto;
+  body{
+    padding:12px;
+    align-items:flex-start;
   }
 
-  .form-box{
+  .container{
     width:100%;
+    min-height:auto;
+    flex-direction:column;
+    border-radius:20px;
   }
 
   .overlay{
     position:relative;
     width:100%;
-    height:140px;
-    left:0;
+    height:auto;
+    min-height:180px;
+    transform:none !important;
+    padding:35px 25px;
   }
 
-  /* スマホアニメーション維持 */
+  .overlay h2{
+    font-size:28px;
+  }
+
+  .overlay p{
+    font-size:14px;
+  }
+
+  .form-box{
+    width:100%;
+    padding:35px 25px;
+  }
+
+  .form-box h2{
+    font-size:28px;
+  }
+
+  input{
+    padding:13px;
+    font-size:14px;
+  }
+
+  button{
+    padding:13px;
+    font-size:14px;
+  }
+
+  /* スマホでは片方だけ表示 */
+  .register-box{
+    display:none;
+    opacity:1;
+    transform:none;
+  }
+
   .container.active .login-box{
-    transform:translateY(-20px);
-    opacity:0;
+    display:none;
+    opacity:1;
+    transform:none;
   }
 
   .container.active .register-box{
-    transform:translateY(0);
-    opacity:1;
-  }
-
-  .container.active .overlay{
-    transform:translateY(-10px);
+    display:flex;
   }
 }
 </style>

@@ -319,3 +319,11 @@ body.dark #darkmodeBtn{
         font-size: 10px;
     }
 }
+.diary-image{
+    width:100%;
+    max-width:100%;
+    border-radius:12px;
+    margin-top:10px;
+    display:block;
+    object-fit:cover;
+}

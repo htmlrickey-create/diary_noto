@@ -56,7 +56,7 @@ async function loadDiary() {
         <h2>${diary.title}</h2>
         <p>${diary.content}</p>
         <small>${diary.date}</small>
-        ${diary.image ? `<img src="/uploads/${diary.image}">` : ""}
+        ${diary.image ? <img class="diary-image" src="/uploads/${diary.image}"></img>: ""}
         `;
 
         diaryContainer.prepend(div);
@@ -71,7 +71,11 @@ darkmode.addEventListener("click", ()=>{
 
     document.body.classList.toggle("dark");
 
-    if(document.body.classList.contains("dark")){
+    const isDark = document.body.classList.contains("dark");
+
+    localStorage.setItem("darkmode", isDark);
+
+    if(isDark){
         darkmode.textContent = "ホワイトモード";
     }else{
         darkmode.textContent = "ダークモード";
@@ -82,9 +86,8 @@ darkmode.addEventListener("click", ()=>{
 const darkMode = localStorage.getItem("darkmode");
 
 if(darkMode === "true"){
-    localStorage.setItem("darkmode",
-    document.body.classList.contains("dark")
-);
+    document.body.classList.add("dark");
+    darkmode.textContent = "ホワイトモード";
 }
 
 async function loadAuth() {
@@ -99,9 +102,11 @@ async function loadAuth() {
 
     if (auth) {
         if (data.loggedIn) {
-            auth.innerHTML = `<p>ようこそ ${data.username}</p>`;
+            auth.innerHTML = `<p>ようこそ ${data.user.username}</p>`;
         } else {
             auth.innerHTML = `<a href="/login_register.html">ログイン/新規登録</a>`;
         }
     }
 }
+
+loadAuth();

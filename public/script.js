@@ -50,7 +50,7 @@ async function loadAuth() {
 
     if (auth) {
         if (data.loggedIn) {
-            auth.innerHTML = `<p>ようこそ ${data.username}</p>`;
+            auth.innerHTML = `<p>ようこそ ${data.user.username}</p>`;
         } else {
             auth.innerHTML = `<a href="/login_register.html">ログイン/新規登録</a>`;
         }
