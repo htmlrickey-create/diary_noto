@@ -81,8 +81,8 @@ app.use(session({
     store: sessionStore,
     cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        sameSite: "lax",
-        secure: false
+        secure: false,
+        sameSite: "lax"
     }
 }));
 
