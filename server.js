@@ -353,6 +353,76 @@ app.get("/api/friend/request", isLogin, (req, res) => {
     });
 });
 
+// =======================
+// mypage API
+// =======================
+app.get("/api/mypage", isLogin, (req, res) => {
+
+    const userId = req.session.userId;
+
+    const userSql = `
+        SELECT id, username, email
+        FROM users
+        WHERE id = ?
+    `;
+
+    const diarySql = `
+        SELECT *
+        FROM diares
+        WHERE user_id = ?
+        ORDER BY id DESC
+    `;
+
+    const friendCountSql = `
+        SELECT COUNT(*) AS count
+        FROM friendships
+        WHERE user_id = ?
+    `;
+
+    const postCountSql = `
+        SELECT COUNT(*) AS count
+        FROM diares
+        WHERE user_id = ?
+    `;
+
+    db.query(userSql, [userId], (err, userResult) => {
+
+        if (err || userResult.length === 0) {
+            return res.status(500).json({ error: "ユーザー取得失敗" });
+        }
+
+        const user = userResult[0];
+
+        db.query(diarySql, [userId], (err2, diaries) => {
+
+            if (err2) {
+                return res.status(500).json({ error: "日記取得失敗" });
+            }
+
+            db.query(friendCountSql, [userId], (err3, friendResult) => {
+
+                if (err3) {
+                    return res.status(500).json({ error: "フレンド数取得失敗" });
+                }
+
+                db.query(postCountSql, [userId], (err4, postResult) => {
+
+                    if (err4) {
+                        return res.status(500).json({ error: "投稿数取得失敗" });
+                    }
+
+                    res.json({
+                        user,
+                        diaries,
+                        friendCount: friendResult[0].count,
+                        postCount: postResult[0].count
+                    });
+                });
+            });
+        });
+    });
+});
+
 
 // =======================
 // friend accept（安全版）
