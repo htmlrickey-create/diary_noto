@@ -252,6 +252,39 @@ app.post(
 );
 
 // =======================
+// diary delete
+// =======================
+app.delete("/api/diary/:id", isLogin, (req, res) => {
+
+    const diaryId = req.params.id;
+    const userId = req.session.userId;
+
+    db.query(
+        "DELETE FROM diares WHERE id = ? AND user_id = ?",
+        [diaryId, userId],
+        (err, result) => {
+
+            if (err) {
+                console.log(err);
+                return res.status(500).json({
+                    error: "削除失敗"
+                });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    error: "日記が見つからない"
+                });
+            }
+
+            res.json({
+                message: "削除成功"
+            });
+        }
+    );
+});
+
+// =======================
 // 自分の日記
 // =======================
 app.get("/api/diary", isLogin, (req, res) => {
