@@ -356,7 +356,8 @@ h1{
     .form-glorp button {
         width: 85%;
         height: 30px;
-        font-size: 18px;
+        font-size: 20px;
+        color: black;
     }
 
     /* ナビ */

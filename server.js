@@ -6,29 +6,40 @@ const session = require("express-session");
 const bcrypt = require("bcrypt");
 const MySQLStore = require("express-mysql-session")(session);
 
+// ⭐追加
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // =======================
-// static
+// Cloudinary設定
 // =======================
-app.use(express.static("public"));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET
+});
 
 // =======================
-// multer（画像拡張子付き保存版）
+// multer（Cloudinary化）
 // =======================
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        cb(null, Date.now() + ext);
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: "diary_app",
+        allowed_formats: ["jpg", "jpeg", "png", "webp"]
     }
 });
 
 const upload = multer({ storage });
+
+// =======================
+// static（uploads削除してOK）
+// =======================
+app.use(express.static("public"));
+
 // =======================
 // DB
 // =======================
@@ -38,17 +49,12 @@ const db = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 db.connect((err) => {
-    if (err) {
-        console.log("DB接続エラー", err);
-    } else {
-        console.log("MySQL接続成功");
-    }
+    if (err) console.log("DB接続エラー", err);
+    else console.log("MySQL接続成功");
 });
 
 // =======================
@@ -84,13 +90,9 @@ app.use(session({
 // login check
 // =======================
 function isLogin(req, res, next) {
-
     if (!req.session.userId) {
-        return res.status(401).json({
-            error: "ログインしてください"
-        });
+        return res.status(401).json({ error: "ログインしてください" });
     }
-
     next();
 }
 
@@ -102,9 +104,7 @@ app.post("/register", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({
-            message: "入力不足"
-        });
+        return res.status(400).json({ message: "入力不足" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -113,16 +113,8 @@ app.post("/register", async (req, res) => {
         "INSERT INTO users (username, password) VALUES (?, ?)",
         [username, hashedPassword],
         (err) => {
-
-            if (err) {
-                return res.status(500).json({
-                    message: "登録失敗"
-                });
-            }
-
-            res.json({
-                message: "登録成功"
-            });
+            if (err) return res.status(500).json({ message: "登録失敗" });
+            res.json({ message: "登録成功" });
         }
     );
 });
@@ -139,29 +131,16 @@ app.post("/login", (req, res) => {
         [username],
         async (err, results) => {
 
-            if (err) {
-                return res.status(500).json({
-                    message: "server error"
-                });
-            }
-
+            if (err) return res.status(500).json({ message: "server error" });
             if (results.length === 0) {
-                return res.status(401).json({
-                    message: "ユーザーなし"
-                });
+                return res.status(401).json({ message: "ユーザーなし" });
             }
 
             const user = results[0];
-
-            const match = await bcrypt.compare(
-                password,
-                user.password
-            );
+            const match = await bcrypt.compare(password, user.password);
 
             if (!match) {
-                return res.status(401).json({
-                    message: "パスワード違う"
-                });
+                return res.status(401).json({ message: "パスワード違う" });
             }
 
             req.session.userId = user.id;
@@ -169,10 +148,7 @@ app.post("/login", (req, res) => {
 
             res.json({
                 message: "ログイン成功",
-                user: {
-                    id: user.id,
-                    username: user.username
-                }
+                user
             });
         }
     );
@@ -184,9 +160,7 @@ app.post("/login", (req, res) => {
 app.get("/api/me", (req, res) => {
 
     if (!req.session.userId) {
-        return res.status(401).json({
-            loggedIn: false
-        });
+        return res.status(401).json({ loggedIn: false });
     }
 
     res.json({
@@ -202,57 +176,43 @@ app.get("/api/me", (req, res) => {
 // logout
 // =======================
 app.post("/logout", (req, res) => {
-
     req.session.destroy(() => {
+        res.json({ message: "ログアウト完了" });
+    });
+});
+
+// =======================
+// 投稿（Cloudinary対応）
+// =======================
+app.post("/api/diary", isLogin, upload.single("image"), (req, res) => {
+
+    const imageUrl = req.file ? req.file.path : null;
+
+    const sql = `
+        INSERT INTO diares
+        (title, content, date, image, user_id)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(sql, [
+        req.body.title,
+        req.body.content,
+        req.body.date,
+        imageUrl,
+        req.session.userId
+    ], (err, result) => {
+
+        if (err) return res.status(500).json({ error: "DBエラー" });
+
         res.json({
-            message: "ログアウト完了"
+            message: "保存成功",
+            id: result.insertId
         });
     });
 });
 
 // =======================
-// 投稿
-// =======================
-app.post(
-    "/api/diary",
-    isLogin,
-    upload.single("image"),
-    (req, res) => {
-
-        const sql = `
-            INSERT INTO diares
-            (title, content, date, image, user_id)
-            VALUES (?, ?, ?, ?, ?)
-        `;
-
-        db.query(
-            sql,
-            [
-                req.body.title,
-                req.body.content,
-                req.body.date,
-                req.file ? req.file.filename : null,
-                req.session.userId
-            ],
-            (err, result) => {
-
-                if (err) {
-                    return res.status(500).json({
-                        error: "DBエラー"
-                    });
-                }
-
-                res.json({
-                    message: "保存成功",
-                    id: result.insertId
-                });
-            }
-        );
-    }
-);
-
-// =======================
-// diary delete
+// diary delete（そのまま維持）
 // =======================
 app.delete("/api/diary/:id", isLogin, (req, res) => {
 
@@ -265,21 +225,14 @@ app.delete("/api/diary/:id", isLogin, (req, res) => {
         (err, result) => {
 
             if (err) {
-                console.log(err);
-                return res.status(500).json({
-                    error: "削除失敗"
-                });
+                return res.status(500).json({ error: "削除失敗" });
             }
 
             if (result.affectedRows === 0) {
-                return res.status(404).json({
-                    error: "日記が見つからない"
-                });
+                return res.status(404).json({ error: "日記が見つからない" });
             }
 
-            res.json({
-                message: "削除成功"
-            });
+            res.json({ message: "削除成功" });
         }
     );
 });
@@ -293,13 +246,7 @@ app.get("/api/diary", isLogin, (req, res) => {
         "SELECT * FROM diares WHERE user_id = ? ORDER BY id DESC",
         [req.session.userId],
         (err, result) => {
-
-            if (err) {
-                return res.status(500).json({
-                    error: "取得失敗"
-                });
-            }
-
+            if (err) return res.status(500).json({ error: "取得失敗" });
             res.json(result);
         }
     );
@@ -315,178 +262,172 @@ app.get("/api/friends-diary", isLogin, (req, res) => {
         FROM diares d
         WHERE d.user_id = ?
         OR d.user_id IN (
-            SELECT friend_id
-            FROM friendships
-            WHERE user_id = ?
-
+            SELECT friend_id FROM friendships WHERE user_id = ?
             UNION
-
-            SELECT user_id
-            FROM friendships
-            WHERE friend_id = ?
+            SELECT user_id FROM friendships WHERE friend_id = ?
         )
         ORDER BY d.id DESC
     `;
 
-    db.query(
-        sql,
-        [
-            req.session.userId,
-            req.session.userId,
-            req.session.userId
-        ],
-        (err, result) => {
+    db.query(sql, [
+        req.session.userId,
+        req.session.userId,
+        req.session.userId
+    ], (err, result) => {
 
-            if (err) {
-                return res.status(500).json({
-                    error: "取得失敗"
-                });
-            }
-
-            res.json(result);
-        }
-    );
+        if (err) return res.status(500).json({ error: "取得失敗" });
+        res.json(result);
+    });
 });
 
 // =======================
-// friend request
+// friend request（安全版）
 // =======================
 app.post("/api/friend", isLogin, (req, res) => {
 
-    const { friendId } = req.body;
+    const friendId = Number(req.body.friendId);
 
-    if (req.session.userId == friendId) {
-        return res.json({
-            error: "自分には送れません"
-        });
+    if (!friendId) {
+        return res.status(400).json({ error: "不正なユーザーID" });
+    }
+
+    if (req.session.userId === friendId) {
+        return res.json({ error: "自分には送れません" });
     }
 
     const checkSql = `
-        SELECT *
-        FROM friend_requests
-        WHERE sender_id = ?
-        AND receiver_id = ?
-        AND status = 'pending'
+        SELECT id FROM friend_requests
+        WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'
     `;
 
-    db.query(
-        checkSql,
-        [req.session.userId, friendId],
-        (err, rows) => {
+    db.query(checkSql, [req.session.userId, friendId], (err, rows) => {
 
-            if (err) {
-                return res.status(500).json({
-                    error: "申請失敗"
-                });
-            }
-
-            if (rows.length > 0) {
-                return res.json({
-                    error: "すでに申請済み"
-                });
-            }
-
-            const insertSql = `
-                INSERT INTO friend_requests
-                (sender_id, receiver_id)
-                VALUES (?, ?)
-            `;
-
-            db.query(
-                insertSql,
-                [req.session.userId, friendId],
-                () => {
-
-                    res.json({
-                        message: "フレンド申請送信"
-                    });
-                }
-            );
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "申請失敗" });
         }
-    );
+
+        if (rows.length > 0) {
+            return res.json({ error: "すでに申請済みです" });
+        }
+
+        const insertSql = `
+            INSERT INTO friend_requests (sender_id, receiver_id, status)
+            VALUES (?, ?, 'pending')
+        `;
+
+        db.query(insertSql, [req.session.userId, friendId], (err2) => {
+
+            if (err2) {
+                console.error(err2);
+                return res.status(500).json({ error: "申請作成失敗" });
+            }
+
+            return res.json({ message: "フレンド申請送信しました" });
+        });
+    });
 });
 
+
 // =======================
-// request list
+// request list（安全版）
 // =======================
 app.get("/api/friend/request", isLogin, (req, res) => {
 
     const sql = `
-        SELECT
-            fr.id,
-            fr.sender_id,
-            u.username
-
+        SELECT fr.id, fr.sender_id, u.username
         FROM friend_requests fr
-
-        JOIN users u
-        ON u.id = fr.sender_id
-
-        WHERE fr.receiver_id = ?
-        AND fr.status = 'pending'
+        JOIN users u ON u.id = fr.sender_id
+        WHERE fr.receiver_id = ? AND fr.status = 'pending'
+        ORDER BY fr.id DESC
     `;
 
-    db.query(
-        sql,
-        [req.session.userId],
-        (err, result) => {
+    db.query(sql, [req.session.userId], (err, result) => {
 
-            if (err) {
-                return res.status(500).json({
-                    error: "取得失敗"
-                });
-            }
-
-            res.json(result);
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "取得失敗" });
         }
-    );
+
+        return res.json(result);
+    });
 });
 
+
 // =======================
-// friend accept
+// friend accept（安全版）
 // =======================
 app.post("/api/friend/accept", isLogin, (req, res) => {
 
-    const { requestId, senderId } = req.body;
+    const requestId = Number(req.body.requestId);
+    const senderId = Number(req.body.senderId);
 
-    const updateSql = `
-        UPDATE friend_requests
-        SET status = 'accepted'
-        WHERE id = ?
+    if (!requestId || !senderId) {
+        return res.status(400).json({ error: "不正なリクエスト" });
+    }
+
+    // まず本当に自分宛の申請かチェック
+    const checkSql = `
+        SELECT * FROM friend_requests
+        WHERE id = ? AND receiver_id = ? AND status = 'pending'
     `;
 
-    db.query(updateSql, [requestId], (err) => {
+    db.query(checkSql, [requestId, req.session.userId], (err, rows) => {
 
         if (err) {
-            return res.status(500).json({
-                error: "承認失敗"
-            });
+            console.error(err);
+            return res.status(500).json({ error: "承認失敗" });
         }
 
-        const friendSql = `
-            INSERT INTO friendships
-            (user_id, friend_id)
-            VALUES (?, ?)
+        if (rows.length === 0) {
+            return res.status(403).json({ error: "この申請は処理できません" });
+        }
+
+        const updateSql = `
+            UPDATE friend_requests
+            SET status = 'accepted'
+            WHERE id = ?
         `;
 
-        db.query(friendSql, [
-            req.session.userId,
-            senderId
-        ]);
+        db.query(updateSql, [requestId], (err2) => {
 
-        db.query(friendSql, [
-            senderId,
-            req.session.userId
-        ]);
+            if (err2) {
+                console.error(err2);
+                return res.status(500).json({ error: "承認更新失敗" });
+            }
 
-        res.json({
-            message: "友達追加成功"
+            // 重複防止チェック（超重要）
+            const existsSql = `
+                SELECT id FROM friendships
+                WHERE user_id = ? AND friend_id = ?
+            `;
+
+            db.query(existsSql, [req.session.userId, senderId], (err3, rows2) => {
+
+                if (err3) {
+                    console.error(err3);
+                    return res.status(500).json({ error: "友達確認失敗" });
+                }
+
+                if (rows2.length === 0) {
+
+                    const insertSql = `
+                        INSERT INTO friendships (user_id, friend_id)
+                        VALUES (?, ?)
+                    `;
+
+                    db.query(insertSql, [req.session.userId, senderId]);
+                    db.query(insertSql, [senderId, req.session.userId]);
+                }
+
+                return res.json({ message: "友達追加成功" });
+            });
         });
     });
 });
 
 // =======================
-// like
+// like（そのまま維持）
 // =======================
 app.post("/api/like", isLogin, (req, res) => {
 
@@ -494,172 +435,29 @@ app.post("/api/like", isLogin, (req, res) => {
     const { postId } = req.body;
 
     const checkSql = `
-        SELECT *
-        FROM likes
-        WHERE user_id = ?
-        AND post_id = ?
+        SELECT * FROM likes
+        WHERE user_id = ? AND post_id = ?
     `;
 
-    db.query(
-        checkSql,
-        [userId, postId],
-        (err, rows) => {
+    db.query(checkSql, [userId, postId], (err, rows) => {
 
-            if (err) {
-                return res.status(500).json({
-                    error: "server error"
-                });
-            }
-
-            // 解除
-            if (rows.length > 0) {
-
-                db.query(
-                    "DELETE FROM likes WHERE user_id = ? AND post_id = ?",
-                    [userId, postId],
-                    () => {
-
-                        res.json({
-                            liked: false
-                        });
-                    }
-                );
-
-            } else {
-
-                // 追加
-                db.query(
-                    "INSERT INTO likes (user_id, post_id) VALUES (?, ?)",
-                    [userId, postId],
-                    () => {
-
-                        res.json({
-                            liked: true
-                        });
-                    }
-                );
-            }
-        }
-    );
-});
-
-// =======================
-// likes count
-// =======================
-app.get("/api/likes/:postId", (req, res) => {
-
-    db.query(
-        "SELECT COUNT(*) AS count FROM likes WHERE post_id = ?",
-        [req.params.postId],
-        (err, rows) => {
-
-            if (err) {
-                return res.status(500).json({
-                    error: "取得失敗"
-                });
-            }
-
-            res.json({
-                count: rows[0].count
-            });
-        }
-    );
-});
-
-// =======================
-// mypage
-// =======================
-app.get("/api/mypage", isLogin, (req, res) => {
-
-    const userId = req.session.userId;
-
-    db.query(
-        "SELECT id, username FROM users WHERE id = ?",
-        [userId],
-        (err, userRows) => {
-
-            if (err) {
-                return res.status(500).json({
-                    error: "user error"
-                });
-            }
-
-            const user = userRows[0];
+        if (rows.length > 0) {
 
             db.query(
-                "SELECT COUNT(*) AS postCount FROM diares WHERE user_id = ?",
-                [userId],
-                (err, postRows) => {
+                "DELETE FROM likes WHERE user_id = ? AND post_id = ?",
+                [userId, postId],
+                () => res.json({ liked: false })
+            );
 
-                    if (err) {
-                        return res.status(500).json({
-                            error: "post error"
-                        });
-                    }
+        } else {
 
-                    db.query(
-                        "SELECT COUNT(*) AS friendCount FROM friendships WHERE user_id = ?",
-                        [userId],
-                        (err, friendRows) => {
-
-                            if (err) {
-                                return res.status(500).json({
-                                    error: "friend error"
-                                });
-                            }
-
-                            db.query(
-                                "SELECT * FROM diares WHERE user_id = ? ORDER BY id DESC",
-                                [userId],
-                                (err, diaryRows) => {
-
-                                    if (err) {
-                                        return res.status(500).json({
-                                            error: "diary error"
-                                        });
-                                    }
-
-                                    res.json({
-                                        user,
-                                        postCount: postRows[0].postCount,
-                                        friendCount: friendRows[0].friendCount,
-                                        diaries: diaryRows
-                                    });
-                                }
-                            );
-                        }
-                    );
-                }
+            db.query(
+                "INSERT INTO likes (user_id, post_id) VALUES (?, ?)",
+                [userId, postId],
+                () => res.json({ liked: true })
             );
         }
-    );
-});
-
-// =======================
-// profile update
-// =======================
-app.post("/api/profile", isLogin, (req, res) => {
-
-    const { username } = req.body;
-
-    db.query(
-        "UPDATE users SET username = ? WHERE id = ?",
-        [username, req.session.userId],
-        (err) => {
-
-            if (err) {
-                return res.status(500).json({
-                    message: "更新失敗"
-                });
-            }
-
-            req.session.username = username;
-
-            res.json({
-                message: "更新成功"
-            });
-        }
-    );
+    });
 });
 
 // =======================

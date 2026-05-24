@@ -4,10 +4,10 @@ async function searchUser() {
     const username =
         document.getElementById("searchUsername").value;
 
-    const res =
-        await fetch(`/api/user/search?username=${username}`,{
-            credentials: "include"
-        });
+    const res = await fetch(
+    `/api/user/search?username=${encodeURIComponent(username)}`,
+    { credentials: "include" }
+    );
 
     const user = await res.json();
 
