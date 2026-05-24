@@ -7,10 +7,6 @@ const bcrypt = require("bcrypt");
 const MySQLStore = require("express-mysql-session")(session);
 
 const app = express();
-
-// =======================
-// Render用ポート
-// =======================
 const PORT = process.env.PORT || 3000;
 
 // =======================
@@ -27,7 +23,7 @@ const upload = multer({
 });
 
 // =======================
-// DB（Render用：環境変数対応）
+// DB（Render対応）
 // =======================
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -46,8 +42,10 @@ db.connect(err => {
 });
 
 // =======================
-// session（Render用）
+// session（Render対応）
 // =======================
+app.set("trust proxy", 1);
+
 const sessionStore = new MySQLStore({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -55,9 +53,6 @@ const sessionStore = new MySQLStore({
     database: process.env.DB_NAME,
     port: process.env.DB_PORT || 3306
 });
-
-// Render対応（proxy必須）
-app.set("trust proxy", 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -75,6 +70,96 @@ app.use(session({
 }));
 
 // =======================
+// 新規登録
+// =======================
+app.post("/register", async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: "入力不足" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    db.query(
+        "INSERT INTO users (username, password) VALUES (?, ?)",
+        [username, hashedPassword],
+        (err) => {
+            if (err) {
+                return res.status(500).json({ message: "登録失敗", err });
+            }
+            res.json({ message: "登録成功" });
+        }
+    );
+});
+
+// =======================
+// ログイン
+// ★ここ修正済み（userId統一）
+// =======================
+app.post("/login", (req, res) => {
+    const { username, password } = req.body;
+
+    db.query(
+        "SELECT * FROM users WHERE username = ?",
+        [username],
+        async (err, results) => {
+            if (err) return res.status(500).json({ message: "エラー" });
+
+            if (results.length === 0) {
+                return res.status(401).json({ message: "ユーザーがいない" });
+            }
+
+            const user = results[0];
+
+            const match = await bcrypt.compare(password, user.password);
+
+            if (!match) {
+                return res.status(401).json({ message: "パスワード違う" });
+            }
+
+            // ★修正ここ
+            req.session.userId = user.id;
+            req.session.username = user.username;
+
+            res.json({
+                message: "ログイン成功",
+                user: {
+                    id: user.id,
+                    username: user.username
+                }
+            });
+        }
+    );
+});
+
+// =======================
+// ログイン確認
+// =======================
+app.get("/api/me", (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ loggedIn: false });
+    }
+
+    res.json({
+        loggedIn: true,
+        user: {
+            id: req.session.userId,
+            username: req.session.username
+        }
+    });
+});
+
+// =======================
+// ログアウト
+// =======================
+app.post("/logout", (req, res) => {
+    req.session.destroy(() => {
+        res.json({ message: "ログアウト完了" });
+    });
+});
+
+// =======================
 // ログインチェック
 // =======================
 function isLogin(req, res, next) {
@@ -85,12 +170,12 @@ function isLogin(req, res, next) {
 }
 
 // =======================
-// 投稿
+// 投稿（テーブル名修正済み）
 // =======================
 app.post("/api/diary", isLogin, upload.single("image"), (req, res) => {
 
     const sql = `
-        INSERT INTO diares (title, content, date, image, user_id)
+        INSERT INTO diaries (title, content, date, image, user_id)
         VALUES (?, ?, ?, ?, ?)
     `;
 
@@ -117,7 +202,7 @@ app.post("/api/diary", isLogin, upload.single("image"), (req, res) => {
 app.get("/api/diary", isLogin, (req, res) => {
 
     db.query(
-        "SELECT * FROM diares WHERE user_id = ? ORDER BY id DESC",
+        "SELECT * FROM diaries WHERE user_id = ? ORDER BY id DESC",
         [req.session.userId],
         (err, result) => {
             if (err) return res.status(500).json({ error: "取得失敗" });
@@ -133,7 +218,7 @@ app.get("/api/friends-diary", isLogin, (req, res) => {
 
     const sql = `
         SELECT d.*
-        FROM diares d
+        FROM diaries d
         WHERE d.user_id = ?
         OR d.user_id IN (
             SELECT friend_id FROM friendships WHERE user_id = ?
@@ -286,7 +371,7 @@ app.get("/api/likes/:postId", (req, res) => {
 });
 
 // =======================
-// Render起動
+// 起動
 // =======================
 app.listen(PORT, () => {
     console.log(`server running on port ${PORT}`);
